@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FlyBrain — комната привычек</title>
+  <link rel="stylesheet" href="/assets/room.css"><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%23202622'/%3E%3Ctext x='10' y='29' fill='%23c4ee79' font-size='28'%3Ef%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+  <header><a class="wordmark" href="/">fly<span>brain</span><i>LAB / 02</i></a><span class="tag">ОДНА МУХА. ПЯТЬ СОБЛАЗНОВ.</span><div class="live"><span id="live-dot"></span><span id="live-text">На паузе</span></div></header>
+  <main>
+    <section class="stage">
+      <div class="stage-head"><div><p class="overline">ЭКСПЕРИМЕНТ 001</p><h1>Комната привычек</h1><p class="subtitle">Дай ей мир. Посмотри, что она выберет.</p></div><button class="quiet" id="camera">Сменить ракурс ↗</button></div>
+      <div id="viewport"><div class="world-hud"><span id="clock">00:00</span><span id="last-action">Мир готов</span></div><div class="legend"><span><i style="background:#fd729a"></i>рилсы</span><span><i style="background:#b993ff"></i>кальян</span><span><i style="background:#f2b857"></i>виски</span><span><i style="background:#8edcc2"></i>Claude</span><span><i style="background:#74a9ff"></i>рулетка</span></div></div>
+      <div class="transport"><button id="play" class="primary" disabled>▶ Запустить</button><button id="step" disabled>Один шаг</button><select id="speed" aria-label="Скорость симуляции"><option value="1">1× время</option><option value="4">4× время</option><option value="16">16× время</option><option value="64">Максимум</option></select><label class="toggle"><input type="checkbox" id="learning" checked> Обучение</label><span id="step-time">— мс / шаг</span></div>
+      <div class="transport"><button id="reset-position">Вернуть в центр</button><span>Без сброса обученных связей</span></div>
+      <div class="lower-grid">
+        <section class="card eyes"><div class="card-head"><h2>Её глазами</h2><span>64 × 48 RGB</span></div><canvas id="eye" width="64" height="48"></canvas><p>Именно эти пиксели поступают в мозг. Объекты представлены упрощённой геометрией.</p></section>
+        <section class="card"><div class="card-head"><h2>Сигнал награды</h2><span id="reward-total">0.00 всего</span></div><canvas id="reward-chart" width="540" height="126"></canvas><div class="feedback"><span>Ручное подкрепление</span><button id="punish" class="negative">−1 Плохо</button><button id="praise" class="positive">+1 Хорошо</button></div><p>Относится к недавним решениям. На оценке без обучения веса заморожены.</p></section>
+      </div>
+    </section>
+    <aside>
+      <section class="card brain-card"><div class="card-head"><h2>Весь мозг</h2><span class="pill">FLYWIRE v783</span></div><div class="brain-number">138 639<small>нейронов</small></div><div class="brain-line"><span>Существующих связей</span><b id="edges">15 091 983</b></div><div class="brain-line"><span>Изменённых весов</span><b id="changed">0</b></div><div class="brain-line"><span>Шагов мира</span><b id="ticks">0</b></div><label class="backend-label">Вычисления<select id="backend"><option value="auto">Автовыбор по скорости</option><option value="mps">GPU · Apple Metal</option><option value="cpu">CPU</option></select></label><p id="backend-info">Мозг загрузится при первом запуске. Режим выбирается до загрузки.</p><div class="brain-actions"><button id="save">Сохранить мозг</button><button id="load">Загрузить</button></div><p id="brain-note">Упрощённая динамика реального графа. Приобретение навыков ещё нужно проверить.</p></section>
+      <section class="card"><div class="card-head"><h2>Что ей нравится</h2><span>НАГРАДА</span></div><label class="select-label">Режим<select id="reward-mode"><option value="constant">Постоянная награда</option><option value="satiation">С насыщением</option></select></label><div id="reward-sliders"></div><button id="apply-rewards" class="wide">Применить правила</button></section>
+      <section class="card bank"><div><p class="overline">БАНК РУЛЕТКИ</p><strong id="bank">100<small> фишек</small></strong></div><button id="topup">+100</button><p>Европейская рулетка · ставка 5 · красное / чёрное. При нуле фишек новые ставки недоступны.</p></section>
+      <section class="card"><label class="select-label">Штраф за пустую попытку<input id="invalid-penalty" type="number" min="0" max="1" step="0.01" value="0.02"></label><p>Попытка использовать недоступный предмет получает минус это значение. 0 отключает штраф. Применяется кнопкой «Применить правила».</p></section>
+      <section class="card log"><div class="card-head"><h2>Сейчас в мире</h2><span>LIVE</span></div><p id="activity-summary"></p><ol id="events"><li>Ждём первого решения мухи.</li></ol></section>
+    </aside>
+  </main>
+  <footer><span>Локальная песочница · вымышленные приложения и фишки</span><span>Пиксели → коннектом → действие → награда</span></footer>
+  <div id="toast" role="status"></div>
+  <script type="module" src="/assets/room.js"></script>
+</body>
+</html>

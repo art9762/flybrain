@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#131211">
+  <title>FLY / ROULETTE — игра против коннектома</title>
+  <link rel="stylesheet" href="/assets/roulette.css">
+  <script src="/assets/roulette.js" defer></script>
+</head>
+<body>
+  <svg class="svg-defs" aria-hidden="true"><defs>
+    <symbol id="icon-magnifier" viewBox="0 0 40 40"><circle cx="17" cy="16" r="10"/><path d="m24 24 10 10M12 16h10M17 11v10"/></symbol>
+    <symbol id="icon-beer" viewBox="0 0 40 40"><path d="M11 8h18l-2 26H13L11 8ZM11 8c-3-4 4-8 8-4 5-4 12 0 10 4M17 15l1 12M23 15l-1 12"/></symbol>
+    <symbol id="icon-cigarette" viewBox="0 0 40 40"><path d="M5 24h28v7H5zM25 24v7M31 18c-8-6 3-6-3-12M35 18c-4-3 3-5 0-9"/></symbol>
+    <symbol id="icon-saw" viewBox="0 0 40 40"><path d="m4 27 22-17 10 10-8 7-4-5-17 11-3-6ZM27 15l5 5-4 3-5-5M10 24l2 5M15 20l2 6M20 16l2 6"/></symbol>
+    <symbol id="icon-cuffs" viewBox="0 0 40 40"><circle cx="11" cy="26" r="8"/><circle cx="29" cy="13" r="8"/><path d="m16 19 8-2M8 23v6M26 10v6"/></symbol>
+    <symbol id="icon-inverter" viewBox="0 0 40 40"><path d="M13 5h14v30H13zM13 12h14M13 29h14M19 15l-3 7h7l-3 5M6 13l-3 3 3 3M3 16h7M34 21l3 3-3 3M30 24h7"/></symbol>
+    <symbol id="icon-bolt" viewBox="0 0 14 24"><path d="M8 0 1 13h5L5 24l8-14H8z"/></symbol>
+    <symbol id="icon-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/><path d="M12 1v6m0 10v6M1 12h6m10 0h6"/></symbol>
+    <symbol id="icon-self" viewBox="0 0 24 24"><path d="M5 10V5h5M5 5l7 7m-6 4a7 7 0 1 0 10-10"/></symbol>
+  </defs></svg>
+  <div class="ambient-grid" aria-hidden="true"></div>
+  <div class="app-shell">
+    <header class="masthead">
+      <a class="wordmark" href="/" aria-label="Fly Roulette, главная"><span class="wordmark-icon" aria-hidden="true">✳</span> FLYBRAIN<span class="wordmark-lab">/ EXPERIMENT 02</span></a>
+      <div class="masthead-right"><span class="connection" id="connection"><i></i> СОЕДИНЕНИЕ…</span><button class="text-button" id="rules-open">Правила <span>↗</span></button></div>
+    </header>
+    <div class="page-heading"><div><p class="eyebrow"><span class="small-square"></span> ОДИН СТОЛ. ДВА РАЗНЫХ МОЗГА.</p><h1>FLY <span>/</span> ROULETTE<span class="title-dot">.</span></h1></div><p class="heading-note">Вы против целого коннектома мухи.<br>У каждого решения есть последствия.</p></div>
+    <main class="main-layout">
+      <section class="game-column" aria-label="Игровой стол">
+        <div class="table-topline"><span><span class="tiny-cross">+</span> КАМЕРА 01 / ИГРОВОЙ СТОЛ</span><span id="load-label">ЗАРЯДКА —</span></div>
+        <div class="game-table" id="game-table">
+          <div class="table-grain" aria-hidden="true"></div><div class="table-rim" aria-hidden="true"></div>
+          <div class="table-corner corner-tl" aria-hidden="true"></div><div class="table-corner corner-tr" aria-hidden="true"></div>
+          <div class="dealer-top"><div class="player-label"><span class="player-marker fly-marker"></span><span>МУХА</span><span class="player-kind" id="fly-kind">КОННЕКТОМ</span></div><div id="fly-health" class="health" aria-label="Здоровье мухи"></div></div>
+          <div class="fly-portrait" id="fly-portrait" aria-label="Стилизованный портрет мухи">
+            <svg class="fly-svg" viewBox="0 0 540 260" role="img" aria-label="Муха с прозрачными крыльями и красными глазами">
+              <defs><linearGradient id="wing" x1="0" y1="0" x2="0.5" y2="1"><stop stop-color="#d0c7b0" stop-opacity=".3"/><stop offset="1" stop-color="#81796e" stop-opacity=".03"/></linearGradient><radialGradient id="eye"><stop stop-color="#d65a49"/><stop offset=".7" stop-color="#963329"/><stop offset="1" stop-color="#3e211d"/></radialGradient><linearGradient id="thorax"><stop stop-color="#656258"/><stop offset=".5" stop-color="#242a25"/><stop offset="1" stop-color="#141a16"/></linearGradient><pattern id="eye-cells" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="2.5" fill="none" stroke="#2b1512" stroke-width=".8" opacity=".6"/></pattern><filter id="fly-shadow"><feDropShadow dx="0" dy="16" stdDeviation="10" flood-opacity=".65"/></filter></defs>
+              <g class="fly-legs" stroke="#80786a" fill="none" stroke-width="3" stroke-linecap="round"><path d="m246 150-57-10-67 32-45 5m164-13-66 29-49 21-62 1m180-25-42 35-39 5-26 22m157-90 57-10 67 32 45 5m-164-13 66 29 49 21 62 1m-180-25 42 35 39 5 26 22"/><path d="m195 140-3-8m-58 38-4-9m41 24-5-7m-31 26-2-8m210-64 3-8m58 38 4-9m-41 24 5-7m31 26 2-8" stroke-width="1.5"/></g>
+              <g class="fly-wing wing-left" fill="url(#wing)" stroke="#aaa18b" stroke-opacity=".45"><path d="M259 158C220 111 125 45 63 51 19 56 64 120 108 141c50 24 99 35 151 17Z"/><path d="M253 156 64 58m182 99L94 105l-37-40m139 82-60-66m35 78-52-25-47-41m129 66-51-35-43-52m108 76-94-20" fill="none" stroke-width=".7"/></g>
+              <g class="fly-wing wing-right" fill="url(#wing)" stroke="#aaa18b" stroke-opacity=".45"><path d="M281 158C320 111 415 45 477 51c44 5-1 69-45 90-50 24-99 35-151 17Z"/><path d="m287 156 189-98m-182 99 152-52 37-40m-139 82 60-66m-35 78 52-25 47-41m-129 66 51-35 43-52m-108 76 94-20" fill="none" stroke-width=".7"/></g>
+              <g filter="url(#fly-shadow)"><ellipse cx="270" cy="188" rx="28" ry="48" fill="url(#thorax)" stroke="#56584b"/><path d="M245 179q25 12 50 0m-51 14q26 13 52 0m-48 14q22 12 44 0m-37 13q15 7 30 0" fill="none" stroke="#90907a" stroke-opacity=".36" stroke-width="3"/><ellipse cx="270" cy="147" rx="35" ry="41" fill="url(#thorax)" stroke="#777764"/><path d="m255 116 2 57m14-64-1 71m15-64-4 57" fill="none" stroke="#93927c" stroke-opacity=".4" stroke-width="2"/><path d="m242 120-5-8m7 20-9-6m8 23-12-3m8 17-9 2m70-45 5-8m-7 20 9-6m-8 23 12-3m-8 17 9 2" stroke="#a49b80" stroke-width="1.2"/><path d="M245 98q25-34 50 0l-6 28h-37Z" fill="#54564b" stroke="#858472"/><ellipse cx="246" cy="100" rx="21" ry="28" transform="rotate(-20 246 100)" fill="url(#eye)"/><ellipse cx="246" cy="100" rx="21" ry="28" transform="rotate(-20 246 100)" fill="url(#eye-cells)"/><ellipse cx="294" cy="100" rx="21" ry="28" transform="rotate(20 294 100)" fill="url(#eye)"/><ellipse cx="294" cy="100" rx="21" ry="28" transform="rotate(20 294 100)" fill="url(#eye-cells)"/><path d="m264 87-9-23-8-6m29 29 9-23 8-6" fill="none" stroke="#a59b7e" stroke-width="2"/><path d="m265 116 5 13 5-13" stroke="#9a9580" fill="#282d25"/></g>
+            </svg>
+            <span class="fly-shadow" aria-hidden="true"></span>
+          </div>
+          <div class="dealer-items" id="dealer-items" aria-label="Предметы мухи"></div>
+          <div class="shell-display"><div class="shell-heading"><span>В ПАТРОННИКЕ</span><span class="shell-order">ПОРЯДОК НЕИЗВЕСТЕН</span></div><div class="shell-line"><div class="shell-row" id="shells" aria-label="Оставшиеся патроны"></div><div class="shell-counts"><span><i class="live-dot"></i><b id="live-count">—</b> боевых</span><span><i class="blank-dot"></i><b id="blank-count">—</b> холостых</span></div></div><div class="known-shell" id="known-shell" hidden></div></div>
+          <div class="shotgun-art" aria-hidden="true"><svg viewBox="0 0 600 150"><defs><linearGradient id="gunmetal" x1="0" x2="0" y2="1"><stop stop-color="#7c7870"/><stop offset=".24" stop-color="#282925"/><stop offset=".64" stop-color="#151816"/><stop offset="1" stop-color="#69665c"/></linearGradient><linearGradient id="wood" x1="0" x2="0" y2="1"><stop stop-color="#76604a"/><stop offset=".5" stop-color="#3b3027"/><stop offset="1" stop-color="#211f1b"/></linearGradient></defs><path d="m28 86 113-38 67 12 59 1v29l-68 2-59-15-98 56-15-4Z" fill="url(#wood)" stroke="#95816a" stroke-opacity=".5"/><path d="m145 52 63 12v21l-65-13" fill="#171b18"/><path d="M211 58h332v16H211z" fill="url(#gunmetal)" stroke="#737469" stroke-width=".7"/><path d="M217 75h267v7H217z" fill="url(#gunmetal)"/><path d="M208 55h94v35h-94z" fill="url(#gunmetal)" stroke="#63675d"/><path d="M292 77h94v21h-94z" fill="url(#wood)" stroke="#79715e"/><path d="M304 80v16m8-16v16m8-16v16m8-16v16m8-16v16m8-16v16m8-16v16m8-16v16m8-16v16m8-16v16" stroke="#bba78a" stroke-opacity=".35"/><path d="M230 90c0 26 39 24 40 0m-25 0c-2 5-1 8 5 10" fill="none" stroke="#6f7268" stroke-width="4"/><path d="M529 54h10v5h-10M219 58h4v29M259 61h29v10h-29" fill="#8e9081" fill-opacity=".5"/><path d="M31 88 39 129" stroke="#1b1d19" stroke-width="9"/><circle cx="238" cy="70" r="2" fill="#acaa94"/></svg></div>
+          <div class="table-caption" id="table-caption">НАБЛЮДАЙ. СЧИТАЙ. РИСКУЙ.</div>
+          <div class="you-bottom"><div class="player-label"><span class="player-marker human-marker"></span><span>ВЫ</span><span class="player-kind">ЧЕЛОВЕК</span></div><div id="human-health" class="health" aria-label="Ваше здоровье"></div></div>
+          <div class="round-overlay" id="round-overlay" hidden><span class="eyebrow">ПАРТИЯ ЗАВЕРШЕНА</span><h2 id="round-result"></h2><p id="round-copy"></p><button class="primary-button" id="play-again">Ещё одна партия <span>↗</span></button></div>
+        </div>
+        <div class="turn-strip"><span class="turn-status" id="turn-status"><i></i> ПОДКЛЮЧЕНИЕ К СТОЛУ</span><span class="turn-help"><span id="turn-hint">Загружаем состояние…</span><button class="text-button" id="retry-fly" hidden>Повторить ход ↻</button></span></div>
+        <div class="action-row"><button class="shoot-button opponent-button" data-action="0" disabled><svg><use href="#icon-target"/></svg><span>Выстрелить в муху<small>БОЕВОЙ НАНОСИТ УРОН</small></span><kbd>1</kbd></button><button class="shoot-button self-button" data-action="1" disabled><svg><use href="#icon-self"/></svg><span>Выстрелить в себя<small>ХОЛОСТОЙ СОХРАНЯЕТ ХОД</small></span><kbd>2</kbd></button></div>
+        <div class="inventory-heading"><span>ВАШИ ПРЕДМЕТЫ</span><span>ИСПОЛЬЗОВАНИЕ НЕ ЗАВЕРШАЕТ ХОД</span></div>
+        <div class="inventory" id="inventory"></div>
+        <div class="event-strip"><span class="event-mark">↳</span><p id="last-event" aria-live="polite">Стол готов. Осталось разбудить соперника.</p><button class="text-button log-button" id="log-toggle" aria-expanded="false" aria-controls="event-log">Журнал <span>+</span></button></div>
+        <ol class="event-log" id="event-log" hidden></ol>
+      </section>
+      <aside class="brain-panel" aria-label="Мозг и обучение">
+        <div class="panel-heading"><span>ЗА ДРУГУЮ СТОРОНУ СТОЛА</span><span>02</span></div>
+        <div class="brain-title-row"><h2>Необычный<br>соперник.</h2><span class="brain-emblem" aria-hidden="true">✳</span></div>
+        <p class="brain-intro">Настоящая карта связей мозга мухи. Новая задача для старой архитектуры.</p>
+        <div class="brain-state" id="brain-state"><i></i><span id="brain-state-text">ОЖИДАЕТ ЗАПУСКА</span><span id="backend-label"></span></div>
+        <div class="brain-stats"><div><b id="neuron-count">—</b><span>нейронов</span></div><div><b id="edge-count">—</b><span>связей в модели</span></div></div>
+        <button class="primary-button wake-button" id="wake-button" disabled><span id="wake-label">Разбудить муху</span><span>↗</span></button>
+        <p class="wake-note" id="wake-note">При первом запуске загружается весь граф.</p>
+        <div class="training-section"><div class="section-label"><h3>Сначала — научить.</h3><span class="training-badge" id="training-badge">НЕ ЗАГРУЖЕНА</span></div><p class="training-copy">Муха получает состояние игры числами и учится выбирать действия по подсказкам учителя и исходам игры.</p>
+          <div class="training-controls"><label for="training-steps" class="sr-only">Количество шагов обучения</label><select id="training-steps"><option value="500">500 шагов · проба</option><option value="2000" selected>2 000 шагов</option><option value="10000">10 000 шагов</option></select><button id="train-button" disabled>Обучить <span>→</span></button></div>
+          <div class="training-progress" id="training-progress" hidden><div class="progress-label"><span id="progress-text">Подготовка…</span><button class="text-button" id="stop-button">Стоп <span>■</span></button></div><progress id="progress-bar" max="100" value="0"></progress></div>
+          <div class="training-result"><div><span>Пройдено шагов</span><b id="trained-steps">0</b></div><div><span>Партий при обучении</span><b id="training-episodes">—</b></div><div><span>Совпадение с учителем</span><b id="teacher-score">—</b></div><p id="training-result-note">Метрики появятся после обучения.</p></div>
+          <div class="checkpoint-row"><button class="text-button" id="save-button" disabled>↓ Сохранить мозг</button><button class="text-button" id="restore-button" disabled>↺ Загрузить</button></div>
+        </div>
+        <details class="model-details"><summary>Что здесь считается мозгом <span>+</span></summary><p>В расчёте участвует весь загруженный граф FlyWire. Упрощённая модель активности использует настоящую структуру связей. Обучение меняет веса части существующих связей; числовой вход и чтение решений остаются фиксированными.</p><p>Это экспериментальная модель, а не точное воспроизведение биологии или сознания мухи. В игре веса заморожены: обучение запускается отдельно.</p><p id="graph-detail"></p></details>
+        <div class="new-game-row"><span>НОВАЯ ЗАРЯДКА.<br>НОВЫЕ ШАНСЫ.</span><button class="text-button" id="new-game-button" disabled>Новая партия <span>↗</span></button></div>
+      </aside>
+    </main>
+    <div class="error-banner" id="error-banner" role="alert" hidden><span id="error-text"></span><button aria-label="Скрыть ошибку" id="error-dismiss">×</button></div>
+    <footer><span>FLY ROULETTE <span class="footer-dim">/</span> ЭКСПЕРИМЕНТ С КОННЕКТОМОМ</span><span>БЕЗ СТАВОК. ТОЛЬКО НЕЙРОНЫ.</span></footer>
+  </div>
+  <dialog id="rules-dialog"><div class="dialog-heading"><p class="eyebrow">КРАТКИЙ ИНСТРУКТАЖ</p><button class="dialog-close" id="rules-close" aria-label="Закрыть правила">×</button></div><h2>Правила стола.</h2><p>У вас и мухи есть заряды здоровья. Цель — оставить соперника без них. При перезарядке показывается количество боевых и холостых патронов, но не их порядок.</p><div class="rule-pair"><div><b>Стреляете в муху</b><p>Боевой отнимает здоровье. После выстрела ход переходит сопернику.</p></div><div><b>Стреляете в себя</b><p>Боевой отнимает ваше здоровье. Холостой сохраняет ваш ход.</p></div></div><h3>Предметы меняют расклад</h3><dl id="rules-items"></dl><p class="rules-footnote">Оригинальный прототип по мотивам Buckshot Roulette. Персонаж, графика и реализация созданы для этого эксперимента.</p></dialog>
+</body>
+</html>

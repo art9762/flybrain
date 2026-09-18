@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FlyBrain Lab</title>
+  <style>
+    :root { color-scheme: dark; --ink:#f4f0df; --muted:#9ca39c; --lime:#c8ff4a; --orange:#ff7347; --panel:#171b19; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:#0d100f; color:var(--ink); font:15px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace; }
+    main { max-width:1180px; margin:auto; padding:48px 24px 80px; }
+    header { display:grid; grid-template-columns:1fr auto; gap:24px; align-items:end; border-bottom:1px solid #39403a; padding-bottom:24px; }
+    h1 { font-size:clamp(40px,8vw,92px); letter-spacing:-.075em; line-height:.82; margin:0; font-weight:900; }
+    h1 span { color:var(--lime); }
+    .eyebrow { color:var(--orange); text-transform:uppercase; letter-spacing:.18em; margin-bottom:14px; }
+    .stats { text-align:right; color:var(--muted); }
+    .stats strong { display:block; color:var(--ink); font-size:20px; }
+    .grid { display:grid; grid-template-columns:340px 1fr; gap:24px; margin-top:24px; }
+    .panel { background:var(--panel); border:1px solid #303631; padding:22px; }
+    label { display:block; color:var(--muted); margin:0 0 15px; }
+    input { width:100%; margin-top:6px; padding:11px; border:1px solid #454c46; background:#0d100f; color:var(--ink); font:inherit; }
+    button { width:100%; padding:15px; background:var(--lime); color:#10130f; border:0; font:800 15px inherit; cursor:pointer; text-transform:uppercase; letter-spacing:.1em; }
+    button:disabled { opacity:.5; cursor:wait; }
+    .note { color:var(--muted); font-size:12px; margin-top:16px; }
+    #chart { width:100%; height:330px; background:#0d100f; border:1px solid #303631; }
+    .resultline { display:flex; flex-wrap:wrap; gap:20px; margin:18px 0; }
+    .metric b { display:block; color:var(--lime); font-size:28px; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th,td { text-align:left; border-bottom:1px solid #303631; padding:9px 6px; }
+    th { color:var(--muted); font-weight:400; }
+    #status { min-height:22px; color:var(--orange); }
+    @media(max-width:800px){ header,.grid{grid-template-columns:1fr}.stats{text-align:left} }
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">connectome dynamics sandbox · v0.1</div>
+  <header><h1>FLY<span>BRAIN</span><br>LAB</h1><div class="stats" id="stats">Загрузка графа…</div></header>
+  <div class="grid">
+    <section class="panel">
+      <form id="controls">
+        <label>Индекс стартового нейрона<input id="seed" type="number" min="0" placeholder="автовыбор"></label>
+        <label>Нейронов в эксперименте<input id="neurons" type="number" min="10" max="20000" value="5000"></label>
+        <label>Длительность, мс<input id="duration" type="number" min="10" max="2000" value="250"></label>
+        <label>Шаг, мс<input id="timestep" type="number" min="0.1" max="2" step="0.1" value="0.5"></label>
+        <label>Синаптическое усиление<input id="gain" type="number" min="0" max="1" step="0.005" value="0.045"></label>
+        <label>Сила стимула<input id="stimulus" type="number" min="0" max="10" step="0.05" value="1.25"></label>
+        <button id="run" type="submit">Запустить импульс</button>
+      </form>
+      <p class="note">Модель экспериментальная: структура связей реальная (FlyWire v783), динамика упрощённая и настраиваемая. Это не цифровая копия живой мухи.</p>
+    </section>
+    <section class="panel">
+      <div id="status">Готовлю первый запуск…</div>
+      <div class="resultline" id="metrics"></div>
+      <canvas id="chart"></canvas>
+      <h3>Самые активные нейроны</h3>
+      <table><thead><tr><th>Локальный индекс</th><th>FlyWire ID</th><th>Импульсы</th></tr></thead><tbody id="top"></tbody></table>
+    </section>
+  </div>
+</main><script>
+const $ = id => document.getElementById(id);
+async function loadStats(){
+  const s=await fetch('/api/stats').then(r=>r.json());
+  $('stats').innerHTML=`<strong>${s.neurons.toLocaleString('ru-RU')} нейронов</strong>${s.edges.toLocaleString('ru-RU')} связей после фильтра ≥${s.minimum_synapses}`;
+  $('seed').placeholder=`авто: ${s.default_seed_index}`;
+}
+function draw(times,counts){
+  const c=$('chart'), d=window.devicePixelRatio||1, box=c.getBoundingClientRect(); c.width=box.width*d;c.height=box.height*d;
+  const x=c.getContext('2d');x.scale(d,d);x.clearRect(0,0,box.width,box.height);
+  const pad=34,w=box.width-pad*2,h=box.height-pad*2,max=Math.max(1,...counts);
+  x.strokeStyle='#303631';x.lineWidth=1;for(let i=0;i<5;i++){let y=pad+h*i/4;x.beginPath();x.moveTo(pad,y);x.lineTo(pad+w,y);x.stroke();}
+  x.strokeStyle='#c8ff4a';x.lineWidth=2;x.beginPath();counts.forEach((v,i)=>{let px=pad+w*i/Math.max(1,counts.length-1),py=pad+h-v/max*h;i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke();
+  x.fillStyle='#9ca39c';x.font='12px monospace';x.fillText('нейронных импульсов / отсчёт',pad,18);x.fillText(`${times.at(-1)||0} мс`,box.width-pad-55,box.height-10);x.fillText(String(max),5,pad+4);
+}
+async function run(event){
+  event?.preventDefault();$('run').disabled=true;$('status').textContent='Симуляция идёт…';
+  const seed=$('seed').value;
+  const body={neurons:+$('neurons').value,duration_ms:+$('duration').value,timestep_ms:+$('timestep').value,synaptic_gain:+$('gain').value,stimulus_amplitude:+$('stimulus').value};
+  if(seed!=='') body.seed_index=+seed;
+  try{
+    const response=await fetch('/api/simulate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const r=await response.json();if(!response.ok)throw Error(r.detail||'Ошибка запуска');
+    $('status').textContent=`Стартовый FlyWire ID: ${r.seed_flywire_id}`;
+    $('metrics').innerHTML=`<span class="metric"><b>${r.neuron_count.toLocaleString('ru-RU')}</b>нейронов</span><span class="metric"><b>${r.edge_count.toLocaleString('ru-RU')}</b>связей</span><span class="metric"><b>${r.spike_count.toLocaleString('ru-RU')}</b>импульсов</span><span class="metric"><b>${r.wall_time_seconds} с</b>расчёт</span>`;
+    draw(r.activity_times_ms,r.activity_counts);$('top').innerHTML=r.top_neurons.map(n=>`<tr><td>${n.index}</td><td>${n.flywire_id}</td><td>${n.spikes}</td></tr>`).join('');
+  }catch(e){$('status').textContent=e.message}finally{$('run').disabled=false}
+}
+$('controls').addEventListener('submit',run);loadStats().then(()=>run());
+</script></body></html>

@@ -1,0 +1,10 @@
+.DS_Store
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+outputs/
+data/*.npy
+data/*.npz
+data/flywire_connectivity_v783.parquet
+data/flywire_neurons_v783.csv
