@@ -2,6 +2,8 @@
 
 FlyBrain is an original experimental research simulator that runs the complete fruit-fly connectome — all 138,639 neurons and 15,091,983 synapses of the FlyWire v783 release — as the decision-making brain of a small animated fly. It is a simplified artificial activity model with engineered sensory and motor interfaces, not a full biophysical emulation of a fly.
 
+[Quick start](#quick-start) · [Habits room](#the-habits-room) · [Roulette duel](#the-roulette-duel) · [Tests](#running-tests) · [Remaining work](ROADMAP.md)
+
 ## What this is
 
 FlyBrain ships as two separate local web prototypes, each with its own model checkpoints:
@@ -24,7 +26,8 @@ Every decision runs three recurrent passes over the complete sparse graph; the 1
 ```sh
 git clone <this-repo> && cd <repo-dir>
 python3 -m venv .venv
-.venv/bin/python -m pip install -e '.[gpu,dev]'   # drop [gpu] for a CPU-only install
+.venv/bin/python -m pip install -e '.[gpu,dev]'   # use '.[dev]' for CPU only
+source .venv/bin/activate
 ```
 
 Then fetch the FlyWire v783 dataset (96 MB download, SHA-256 verified into `data/`) and start either app:
@@ -64,7 +67,7 @@ The action schema is exactly: `shoot_opponent`, `shoot_self`, `magnifier`, `beer
 
 The same full connectome drives every decision (three recurrent passes over all 138,639 neurons and 15,091,983 edges). A fixed encoder repeats 48 normalized numeric observations — health, public shell information, the fly's private inspection, inventories, turn effects, and legal actions — into the sparse sensory projection; eight artificial motor populations produce action probabilities, and illegal actions are masked by the rules engine. Only existing edges entering the selected motor neurons are trainable (7,044 for the current initialization); signs and topology are preserved. Weights are frozen whenever the fly plays against you.
 
-On wake, `outputs/roulette-latest.npz` (currently a model after 14,000 cumulative updates) loads automatically and the matching `outputs/roulette-latest.json` is shown as the completed training result. Playing is blocked while loading, training, evaluating, or saving. The stop button halts updates at the nearest boundary, then finishes evaluation and saves.
+On wake, `outputs/roulette-latest.npz` loads automatically when present, and a matching `outputs/roulette-latest.json` supplies the training result. The historical 14,000-update model described in the brief is a local artifact, not a checkpoint included in a fresh clone. Playing is blocked while loading, training, evaluating, or saving. The stop button halts updates at the nearest boundary, then finishes evaluation and saves.
 
 The training report is optional: a missing, damaged, or mismatched JSON file no longer prevents a valid checkpoint from loading or playing. Its scores are shown only when the graph and cumulative update count match; new reports also identify the evaluated weights with a policy checksum. Older reports remain compatible through the graph/update checks. Report writes replace the JSON atomically, and a stopped run keeps its stopped status after restore. A damaged checkpoint still raises a load error and can be retried after repairing the file.
 
@@ -97,7 +100,9 @@ node --test tests/test_room_controls.mjs tests/test_room_events.mjs
 PYTHONPATH=src python3 scripts/validate_runtime.py --help
 ```
 
-Recorded results (from 2026-09-16, not re-run for this text): 155 Python tests passed and one GPU test was skipped in a restricted process; all five GPU tests then passed in a real Metal process. All 11 room-panel JavaScript tests passed, and all 41 roulette tests passed. An earlier historical check of the room counted 56 passed tests, including real Metal outside the restricted environment.
+Maintenance validation on 2026-10-23: **173 Python tests and 11 Node tests passed**, including checkpoint recovery and report consistency regressions on synthetic graphs. This was not a new full-connectome training or behavior evaluation.
+
+Historical results from 2026-09-16: 155 Python tests passed and one GPU test was skipped in a restricted process; all five GPU tests then passed in a real Metal process. The 41 roulette tests also passed after integration edits. The briefs preserve these earlier experiment records separately from the maintenance checks.
 
 An artificial "two images → two correct actions" test (full brain, 800 trials) is the clearest evidence that the plasticity mechanism learns: after signal centering, the probability of the correct action rose from 10.52% to 41.89% (seed 42) and from 12.79% to 54.76% (seed 43) at two initial states, with the correct-versus-swapped image–action association gap moving from −3.08 to +32.95 and from +0.66 to +48.64 percentage points on new noisy images. These are results for a simple visual-learning test — they are not item recognition or room mastery. Machine reports: `outputs/runtime_validation.json` and `outputs/runtime_validation_seed43.json`.
 
@@ -139,6 +144,7 @@ docs/                archived briefs and the original Russian README (docs/archi
 
 ## Documentation
 
+- [ROADMAP.md](ROADMAP.md) — remaining priorities, acceptance criteria, and measured versus unverified status.
 - [PROJECT_BRIEF.md](PROJECT_BRIEF.md) — habits room: rules, learning mechanism, verification status, and limits. Authoritative.
 - [ROULETTE_BRIEF.md](ROULETTE_BRIEF.md) — duel: rules, training pipeline, measured results. Authoritative.
 - The original Russian README and briefs live in `docs/archive/ru/`.
