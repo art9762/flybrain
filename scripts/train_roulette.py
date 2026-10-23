@@ -6,6 +6,7 @@ from pathlib import Path
 
 from flybrain.roulette_brain import RouletteBrain
 from flybrain.roulette_training import train
+from flybrain.roulette_reports import save_training_report
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -30,4 +31,4 @@ if __name__ == "__main__":
                    max_seconds=args.max_seconds, evaluation_games=args.evaluation_games,
                    progress=lambda value: print(json.dumps(value, ensure_ascii=False), flush=True))
     brain.save(ROOT / "outputs" / "roulette-latest.npz")
-    (ROOT / "outputs" / "roulette-latest.json").write_text(json.dumps(report, indent=2)+"\n")
+    save_training_report(ROOT / "outputs" / "roulette-latest.json", report)

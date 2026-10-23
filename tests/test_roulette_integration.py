@@ -1,6 +1,7 @@
 """Frozen live decisions and bounded trainer/API behavior on a small graph."""
 
 from copy import deepcopy
+import json
 from pathlib import Path
 import threading
 
@@ -11,6 +12,7 @@ import pytest
 from flybrain.connectome import Connectome
 from flybrain.roulette_brain import RouletteBrain
 from flybrain.roulette_session import RouletteSession
+from flybrain.roulette_reports import policy_checksum, save_training_report
 from flybrain import roulette_app, roulette_session, roulette_training
 
 
@@ -194,3 +196,103 @@ def test_training_uses_separate_holdout_samples_and_acting_player_masks(tmp_path
     restored = brain_factory(tmp_path)
     restored.load(Path(report["checkpoint"]))
     np.testing.assert_array_equal(restored.log_multipliers, brain.log_multipliers)
+    assert report["policy_checksum"] == policy_checksum(restored)
+
+
+def training_report(brain, **changes):
+    return {"schema": "flybrain-roulette-training-v1",
+            "graph": {"neurons": brain.neuron_count, "edges": brain.edge_count,
+                      "checksum": brain.graph_checksum, "plastic_edges": len(brain.plastic_indices)},
+            "cumulative_learning_updates": brain.learning_updates,
+            "policy_checksum": policy_checksum(brain),
+            "steps": 20, "target_steps": 100, "episodes": 1, "stop_reason": "user_stop", **changes}
+
+
+@pytest.mark.parametrize("report_text", [None, "{partial", "[]", "null", "{}", '{"schema":"unknown"}'])
+def test_optional_report_cannot_block_wake_or_checkpoint_restore(tmp_path, report_text):
+    brain = brain_factory(tmp_path)
+    output = tmp_path / "outputs"
+    checkpoint = output / "roulette-latest.npz"
+    brain.save(checkpoint)
+    if report_text is not None:
+        checkpoint.with_suffix(".json").write_text(report_text)
+    session = ready_session(tmp_path)
+    assert session.status()["brain"] is not None
+    assert session.status()["training"]["state"] == "idle"
+    session.new_game(starting_player=1)
+    session.fly()
+    restored = session.checkpoint("load")
+    assert restored["brain"] is not None and restored["run"]["error"] is None
+    assert restored["training"]["state"] == "idle"
+
+
+@pytest.mark.parametrize("change", [
+    {"cumulative_learning_updates": 99}, {"graph": {}},
+    {"policy_checksum": "stale-weights"}, {"steps": "20"},
+    {"teacher_agreement_after": float("nan")}, {"evaluation": {"score": float("inf")}},
+])
+def test_stale_training_evidence_is_not_attached_to_loaded_weights(tmp_path, change):
+    brain = brain_factory(tmp_path)
+    checkpoint = tmp_path / "outputs" / "roulette-latest.npz"
+    brain.save(checkpoint)
+    checkpoint.with_suffix(".json").write_text(json.dumps(training_report(brain, **change)))
+    session = ready_session(tmp_path)
+    assert session.status()["training"]["state"] == "idle"
+    assert session.status()["run"]["error"] is None
+
+
+@pytest.mark.parametrize("legacy", [False, True])
+def test_matching_report_survives_live_actions_and_manual_save(tmp_path, legacy):
+    session = ready_session(tmp_path)
+    report = training_report(session.brain)
+    if legacy:
+        del report["policy_checksum"]
+    session.checkpoint("save")
+    save_training_report(session.checkpoint_path.with_suffix(".json"), report)
+    session.new_game(starting_player=1)
+    session.fly()
+    session.checkpoint("save")
+    restored = ready_session(tmp_path)
+    assert restored.status()["training"] == {**report, "state": "stopped"}
+    assert restored.checkpoint("load")["training"] == {**report, "state": "stopped"}
+
+
+def test_changed_policy_with_same_update_count_rejects_new_report(tmp_path):
+    brain = brain_factory(tmp_path)
+    report = training_report(brain)
+    brain.log_multipliers[0] += .01
+    checkpoint = tmp_path / "outputs" / "roulette-latest.npz"
+    brain.save(checkpoint)
+    save_training_report(checkpoint.with_suffix(".json"), report)
+    assert ready_session(tmp_path).training_status["state"] == "idle"
+
+
+def test_failed_checkpoint_wake_can_retry_after_file_is_repaired(tmp_path):
+    checkpoint = tmp_path / "outputs" / "roulette-latest.npz"
+    checkpoint.parent.mkdir()
+    checkpoint.write_bytes(b"incomplete checkpoint")
+    session = RouletteSession(tmp_path, brain_factory=brain_factory)
+    session.load_brain("cpu")
+    session.worker.join(5)
+    assert session.brain is None and session.brain_status is None
+    assert session.error is not None and not session.loading
+    brain_factory(tmp_path).save(checkpoint)
+    session.load_brain("cpu")
+    session.worker.join(5)
+    assert session.status()["brain"] is not None and session.error is None
+
+
+def test_report_write_failure_preserves_previous_json_and_cleans_temporary_file(tmp_path, monkeypatch):
+    from flybrain import roulette_reports
+
+    path = tmp_path / "report.json"
+    save_training_report(path, {"previous": True})
+
+    def failed_replace(*args):
+        raise OSError("disk unavailable")
+
+    monkeypatch.setattr(roulette_reports.os, "replace", failed_replace)
+    with pytest.raises(OSError, match="disk unavailable"):
+        save_training_report(path, {"new": True})
+    assert json.loads(path.read_text()) == {"previous": True}
+    assert list(tmp_path.iterdir()) == [path]

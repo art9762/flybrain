@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 from datetime import datetime
-import json
 from pathlib import Path
 import threading
 
 from .roulette import RouletteGame
 from .roulette_training import mask_for, train
+from .roulette_reports import idle_training_status, load_training_status, save_training_report
 
 
 class RouletteSession:
@@ -23,7 +23,7 @@ class RouletteSession:
         self.loading = self.busy = self.training = False
         self.error = None
         self.backend = "auto"
-        self.training_status = {"state": "idle", "steps": 0, "target_steps": 2000, "episodes": 0}
+        self.training_status = idle_training_status()
         self.worker = None
 
     @property
@@ -47,14 +47,18 @@ class RouletteSession:
         if self.brain is None:
             raise ValueError("Сначала разбудите муху")
 
-    def _cache(self):
-        full = self.brain.observe_status()
+    @staticmethod
+    def _model_status(brain):
+        full = brain.observe_status()
         # Action probabilities and neural activations could disclose a private
         # magnifier result. The opponent sees only model/training metadata.
         fields = ("neurons", "edges", "fullGraph", "plasticEdges", "changedWeights",
                   "learningUpdates", "backend", "seed", "graphChecksum", "model",
                   "actionSchema", "observationSchema", "policyInput", "learningRule")
-        self.brain_status = {key: full[key] for key in fields if key in full}
+        return {key: full[key] for key in fields if key in full}
+
+    def _cache(self):
+        self.brain_status = self._model_status(self.brain)
 
     def load_brain(self, backend="auto"):
         with self.lock:
@@ -76,12 +80,14 @@ class RouletteSession:
             if self.checkpoint_path.is_file():
                 brain.load(self.checkpoint_path)
                 brain.reset_activity()
+                training_status = load_training_status(self.checkpoint_path.with_suffix(".json"), brain)
+            else:
+                training_status = idle_training_status()
+            brain_status = self._model_status(brain)
             with self.lock:
                 self.brain = brain
-                report_path = self.root / "outputs" / "roulette-latest.json"
-                if self.checkpoint_path.is_file() and report_path.is_file():
-                    self.training_status = {**json.loads(report_path.read_text()), "state": "complete"}
-                self._cache()
+                self.brain_status = brain_status
+                self.training_status = training_status
         except Exception as error:
             with self.lock:
                 self.error = f"{type(error).__name__}: {error}"
@@ -144,8 +150,7 @@ class RouletteSession:
                     self.training_status.update(value)
             report = train(self.brain, path, steps=steps, stopped=self.stop_event.is_set, progress=progress)
             self.brain.save(self.checkpoint_path)
-            (self.root / "outputs" / "roulette-latest.json").write_text(
-                json.dumps(report, ensure_ascii=False, indent=2)+"\n")
+            save_training_report(self.checkpoint_path.with_suffix(".json"), report)
         except Exception as error:
             with self.lock:
                 self.error = f"{type(error).__name__}: {error}"
@@ -164,12 +169,11 @@ class RouletteSession:
             self._brain_ready()
             if action == "save":
                 self.brain.save(self.checkpoint_path)
-            else:
+            elif action == "load":
                 self.brain.load(self.checkpoint_path)
                 self.brain.reset_activity()
-                report_path = self.root / "outputs" / "roulette-latest.json"
-                self.training_status = ({**json.loads(report_path.read_text()), "state": "complete"}
-                                        if report_path.is_file()
-                                        else {"state": "idle", "steps": 0, "target_steps": 2000, "episodes": 0})
+                self.training_status = load_training_status(self.checkpoint_path.with_suffix(".json"), self.brain)
+            else:
+                raise ValueError("Неизвестное действие с сохранением")
             self._cache()
             return self.status()

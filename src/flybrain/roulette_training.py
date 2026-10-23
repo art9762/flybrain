@@ -4,13 +4,13 @@ from __future__ import annotations
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timezone
-import json
 from pathlib import Path
 import time
 
 import numpy as np
 
 from .roulette import ACTIONS, RouletteGame, teacher_action
+from .roulette_reports import policy_checksum, save_training_report
 
 
 def mask_for(game, player=None):
@@ -183,10 +183,11 @@ def train(brain, output_dir: Path, *, steps=2000, seed=6100, max_seconds=600,
         "weight_change_norm": float(np.linalg.norm(brain.log_multipliers-initial)),
         "learning_updates": brain.learning_updates-updates_before,
         "cumulative_learning_updates": brain.learning_updates,
+        "policy_checksum": policy_checksum(brain),
         "checkpoint": str(checkpoint), "report": str(output_dir / "report.json"),
         "limitations": "One connectome initialization and small held-out game sample; no biological cognition or superiority claim.",
     }
-    (output_dir / "report.json").write_text(json.dumps(report, indent=2, ensure_ascii=False)+"\n")
+    save_training_report(output_dir / "report.json", report)
     progress({**report, "state": "stopped" if stop_reason == "user_stop" else "complete",
               "message": "Обучение и проверка завершены"})
     return report
