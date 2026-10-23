@@ -66,6 +66,8 @@ The same full connectome drives every decision (three recurrent passes over all 
 
 On wake, `outputs/roulette-latest.npz` (currently a model after 14,000 cumulative updates) loads automatically and the matching `outputs/roulette-latest.json` is shown as the completed training result. Playing is blocked while loading, training, evaluating, or saving. The stop button halts updates at the nearest boundary, then finishes evaluation and saves.
 
+The training report is optional: a missing, damaged, or mismatched JSON file no longer prevents a valid checkpoint from loading or playing. Its scores are shown only when the graph and cumulative update count match; new reports also identify the evaluated weights with a policy checksum. Older reports remain compatible through the graph/update checks. Report writes replace the JSON atomically, and a stopped run keeps its stopped status after restore. A damaged checkpoint still raises a load error and can be retried after repairing the file.
+
 ## Training headless
 
 Room (full graph, world rewards only):
